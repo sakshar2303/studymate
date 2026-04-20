@@ -82,7 +82,7 @@ export function Subjects() {
                   <div className="flex items-center gap-3">
                     <div
                       className="w-10 h-10 rounded-lg flex items-center justify-center"
-                      style={{ backgroundColor: subject.color || subject.color || '#f59e0b' + '20' }}
+                      style={{ backgroundColor: `${subject.color || '#f59e0b'}20` }}
                     >
                       <BookOpen className="w-5 h-5" style={{ color: subject.color || '#f59e0b' }} />
                     </div>
@@ -104,13 +104,13 @@ export function Subjects() {
                   <div>
                     <div className="flex justify-between text-xs text-slate-400 mb-1">
                       <span>Progress</span>
-                      <span>{Math.round((subject.totalHours / subject.goalHours) * 100)}%</span>
+                      <span>{Math.round(((subject.totalHours || 0) / subject.goalHours) * 100)}%</span>
                     </div>
                     <div className="h-2 bg-slate-700 rounded-full overflow-hidden">
                       <div
                         className="h-full rounded-full transition-all"
                         style={{
-                          width: `${Math.min(100, (subject.totalHours / subject.goalHours) * 100)}%`,
+                          width: `${Math.min(100, ((subject.totalHours || 0) / subject.goalHours) * 100)}%`,
                           backgroundColor: subject.color || '#f59e0b',
                         }}
                       />

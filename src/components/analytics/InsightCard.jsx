@@ -13,11 +13,17 @@ export function InsightCard() {
   const stats = useMemo(() => {
     const streak = getStreak(sessions);
     const totalHours = sessions.reduce((sum, s) => sum + (s.duration || 0), 0) / 60;
-    const todaySessions = sessions.filter(s => {
+    const todaySessions = (sessions || []).filter(s => {
       if (!s.createdAt) return false;
-      const d = new Date(s.createdAt?.seconds ? s.createdAt.seconds * 1000 : s.createdAt);
-      const today = new Date();
-      return d.toDateString() === today.toDateString();
+      try {
+        const dateVal = s.createdAt?.seconds ? s.createdAt.seconds * 1000 : s.createdAt;
+        if (!dateVal) return false;
+        const d = new Date(dateVal);
+        const today = new Date();
+        return d.toDateString() === today.toDateString();
+      } catch {
+        return false;
+      }
     });
     const todayMinutes = todaySessions.reduce((sum, s) => sum + (s.duration || 0), 0);
 

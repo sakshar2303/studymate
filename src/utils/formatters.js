@@ -45,21 +45,31 @@ export const getWeekDays = () => {
 
 export const groupByDay = (sessions) => {
   const grouped = {};
+  if (!sessions) return grouped;
   sessions.forEach(s => {
-    const day = new Date(s.createdAt?.seconds ? s.createdAt.seconds * 1000 : s.createdAt).toDateString();
-    if (!grouped[day]) grouped[day] = [];
-    grouped[day].push(s);
+    try {
+      const dateVal = s.createdAt?.seconds ? s.createdAt.seconds * 1000 : s.createdAt;
+      if (!dateVal) return;
+      const day = new Date(dateVal).toDateString();
+      if (!grouped[day]) grouped[day] = [];
+      grouped[day].push(s);
+    } catch (e) {
+      console.warn('Failed to parse date for session', s, e);
+    }
   });
   return grouped;
 };
 
 export const getStreak = (sessions) => {
-  if (!sessions.length) return 0;
-  const sorted = [...sessions].sort((a, b) => {
-    const da = new Date(a.createdAt?.seconds ? a.createdAt.seconds * 1000 : a.createdAt);
-    const db = new Date(b.createdAt?.seconds ? b.createdAt.seconds * 1000 : b.createdAt);
-    return db - da;
-  });
+  if (!sessions || !sessions.length) return 0;
+  try {
+    const sorted = [...sessions]
+      .filter(s => s.createdAt)
+      .sort((a, b) => {
+        const da = new Date(a.createdAt?.seconds ? a.createdAt.seconds * 1000 : a.createdAt);
+        const db = new Date(b.createdAt?.seconds ? b.createdAt.seconds * 1000 : b.createdAt);
+        return db - da;
+      });
 
   let streak = 0;
   let currentDate = new Date();
@@ -81,14 +91,14 @@ export const getStreak = (sessions) => {
 
 export const getSubjectColor = (index) => {
   const colors = [
-    'bg-amber-500',
-    'bg-blue-500',
-    'bg-green-500',
-    'bg-purple-500',
-    'bg-pink-500',
-    'bg-teal-500',
-    'bg-orange-500',
-    'bg-indigo-500',
+    '#f59e0b', // amber-500
+    '#3b82f6', // blue-500
+    '#22c55e', // green-500
+    '#a855f7', // purple-500
+    '#ec4899', // pink-500
+    '#14b8a6', // teal-500
+    '#f97316', // orange-500
+    '#6366f1', // indigo-500
   ];
   return colors[index % colors.length];
 };
