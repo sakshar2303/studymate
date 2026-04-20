@@ -22,16 +22,25 @@ export function StudyChart() {
     const days = getWeekDays();
     const dailyMinutes = Array(7).fill(0);
 
-    sessions.forEach(s => {
-      if (!s.createdAt) return;
-      const d = new Date(s.createdAt?.seconds ? s.createdAt.seconds * 1000 : s.createdAt);
-      const dayIndex = (d.getDay() + 6) % 7;
-      dailyMinutes[dayIndex] += (s.duration || 0);
-    });
+    try {
+      sessions.forEach(s => {
+        if (!s.createdAt) return;
+        const dateVal = s.createdAt?.seconds ? s.createdAt.seconds * 1000 : s.createdAt;
+        if (!dateVal) return;
+        const d = new Date(dateVal);
+        if (isNaN(d.getTime())) return;
+        const dayIndex = (d.getDay() + 6) % 7;
+        if (dayIndex >= 0 && dayIndex < 7) {
+          dailyMinutes[dayIndex] += (s.duration || 0);
+        }
+      });
+    } catch (e) {
+      console.warn('Chart data processing failed', e);
+    }
 
     return days.map((day, i) => ({
       day,
-      hours: parseFloat((dailyMinutes[i] / 60).toFixed(1)),
+      hours: parseFloat(((dailyMinutes[i] || 0) / 60).toFixed(1)),
     }));
   }, [sessions]);
 

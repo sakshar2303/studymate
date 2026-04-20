@@ -54,7 +54,7 @@ export function Navbar() {
 
           <div className="flex items-center gap-3">
             <div className="hidden sm:block text-right">
-              <p className="text-sm font-medium text-white">{user?.displayName || 'Student'}</p>
+              <p className="text-sm font-medium text-white">{user?.displayName || (user?.email?.split('@')[0]) || 'Student'}</p>
               <p className="text-xs text-slate-400">{user?.email}</p>
             </div>
             <button
