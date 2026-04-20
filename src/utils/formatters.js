@@ -75,18 +75,22 @@ export const getStreak = (sessions) => {
   let currentDate = new Date();
   currentDate.setHours(0, 0, 0, 0);
 
-  for (const session of sorted) {
-    const sessionDate = new Date(session.createdAt?.seconds ? session.createdAt.seconds * 1000 : session.createdAt);
-    sessionDate.setHours(0, 0, 0, 0);
-    const diff = Math.floor((currentDate - sessionDate) / (1000 * 60 * 60 * 24));
-    if (diff === streak || diff === streak + 1) {
-      streak++;
-      currentDate = sessionDate;
-    } else {
-      break;
+    for (const session of sorted) {
+      const sessionDate = new Date(session.createdAt?.seconds ? session.createdAt.seconds * 1000 : session.createdAt);
+      sessionDate.setHours(0, 0, 0, 0);
+      const diff = Math.floor((currentDate - sessionDate) / (1000 * 60 * 60 * 24));
+      if (diff === streak || diff === streak + 1) {
+        streak++;
+        currentDate = sessionDate;
+      } else {
+        break;
+      }
     }
+    return streak;
+  } catch (e) {
+    console.error('Streak calculation failed', e);
+    return 0;
   }
-  return streak;
 };
 
 export const getSubjectColor = (index) => {
