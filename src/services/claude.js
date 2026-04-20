@@ -4,6 +4,7 @@ const ANTHROPIC_KEY = import.meta.env.VITE_ANTHROPIC_API_KEY || '';
 
 const client = new Anthropic({
   apiKey: ANTHROPIC_KEY,
+  dangerouslyAllowBrowser: true,
 });
 
 const AI_MODEL = 'claude-opus-4-6';
