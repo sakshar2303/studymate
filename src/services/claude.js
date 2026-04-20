@@ -1,9 +1,13 @@
 import Anthropic from '@anthropic-ai/sdk';
 
-const ANTHROPIC_KEY = import.meta.env.VITE_ANTHROPIC_API_KEY || '';
+const ANTHROPIC_KEY = import.meta.env.VITE_ANTHROPIC_API_KEY;
+
+if (!ANTHROPIC_KEY) {
+  console.error('CRITICAL: VITE_ANTHROPIC_API_KEY is missing from environment variables!');
+}
 
 const client = new Anthropic({
-  apiKey: ANTHROPIC_KEY,
+  apiKey: ANTHROPIC_KEY || 'MISSING_KEY',
   dangerouslyAllowBrowser: true,
 });
 
