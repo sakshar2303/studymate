@@ -8,10 +8,10 @@ import { ROUTES } from '../utils/constants';
 import { Plus, Play, BookOpen } from 'lucide-react';
 
 export function Dashboard() {
-  const { subjects } = useStudy();
+  const { subjects = [] } = useStudy();
   const navigate = useNavigate();
 
-  const recentSubjects = subjects.slice(0, 3);
+  const recentSubjects = subjects ? subjects.slice(0, 3) : [];
 
   return (
     <div className="p-4 md:p-6 space-y-6 max-w-6xl mx-auto">

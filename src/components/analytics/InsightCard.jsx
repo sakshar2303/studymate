@@ -4,9 +4,11 @@ import { Card, CardHeader, CardBody, Badge, ProgressBar } from '../ui';
 import { formatDuration } from '../../utils/formatters';
 import { TrendingUp, Target, Flame } from 'lucide-react';
 import { getStreak } from '../../utils/formatters';
+import { useNavigate } from 'react-router-dom';
 
 export function InsightCard() {
-  const { subjects, sessions } = useStudy();
+  const { subjects = [], sessions = [] } = useStudy();
+  const navigate = useNavigate();
 
   const stats = useMemo(() => {
     const streak = getStreak(sessions);
@@ -19,12 +21,14 @@ export function InsightCard() {
     });
     const todayMinutes = todaySessions.reduce((sum, s) => sum + (s.duration || 0), 0);
 
-    const subjectStats = subjects.map(s => ({
+    const subjectStats = (subjects || []).map(s => ({
       ...s,
-      progress: s.goalHours > 0 ? Math.min(100, (s.totalHours / s.goalHours) * 100) : 0,
+      progress: (s.goalHours > 0) ? Math.min(100, ((s.totalHours || 0) / s.goalHours) * 100) : 0,
     }));
 
-    const topSubject = subjectStats.sort((a, b) => (b.totalHours || 0) - (a.totalHours || 0))[0];
+    const topSubject = subjectStats.length > 0 
+      ? subjectStats.sort((a, b) => (b.totalHours || 0) - (a.totalHours || 0))[0]
+      : null;
 
     return { streak, totalHours, todayMinutes, topSubject, subjectStats };
   }, [subjects, sessions]);
