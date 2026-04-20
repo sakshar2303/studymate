@@ -7,7 +7,7 @@ const client = new Anthropic({
   dangerouslyAllowBrowser: true,
 });
 
-const AI_MODEL = 'claude-opus-4-6';
+const AI_MODEL = 'claude-3-haiku-20240307';
 
 const systemPrompt = `You are StudyMate AI, a helpful study assistant for students. You help with:
 - Generating quiz questions and flashcards from any subject/topic
