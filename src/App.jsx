@@ -9,13 +9,13 @@ import { ROUTES } from './utils/constants';
 import { Login } from './pages/Login';
 import { Signup } from './pages/Signup';
 
-const Dashboard = lazy(() => import('./pages/Dashboard'));
-const Subjects = lazy(() => import('./pages/Subjects'));
-const StudySession = lazy(() => import('./pages/StudySession'));
-const Analytics = lazy(() => import('./pages/Analytics'));
-const Quizzes = lazy(() => import('./pages/Quizzes'));
-const AIAssistant = lazy(() => import('./pages/AIAssistant'));
-const Settings = lazy(() => import('./pages/Settings'));
+const Dashboard = lazy(() => import('./pages/Dashboard').then(m => ({ default: m.Dashboard })));
+const Subjects = lazy(() => import('./pages/Subjects').then(m => ({ default: m.Subjects })));
+const StudySession = lazy(() => import('./pages/StudySession').then(m => ({ default: m.StudySession })));
+const Analytics = lazy(() => import('./pages/Analytics').then(m => ({ default: m.Analytics })));
+const Quizzes = lazy(() => import('./pages/Quizzes').then(m => ({ default: m.Quizzes })));
+const AIAssistant = lazy(() => import('./pages/AIAssistant').then(m => ({ default: m.AIAssistant })));
+const Settings = lazy(() => import('./pages/Settings').then(m => ({ default: m.Settings })));
 
 function App() {
   return (
