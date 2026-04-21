@@ -45,7 +45,7 @@ export function InsightCard() {
       <Card className="bg-gradient-to-br from-amber-500/10 to-amber-600/5 border-amber-500/20">
         <CardBody className="flex flex-row items-center gap-4">
           <div className="w-10 h-10 rounded-full bg-amber-500/20 flex items-center justify-center">
-            <Flame className="w-5 h-5 text-amber-400" />
+            <Flame className="w-5 h-5 text-amber-400 fire-icon" />
           </div>
           <div>
             <p className="text-2xl font-bold text-amber-400">{stats.streak}</p>

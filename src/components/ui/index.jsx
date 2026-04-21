@@ -38,7 +38,7 @@ export function Button({
 
 export function Card({ children, className = '', ...props }) {
   return (
-    <div className={`bg-slate-800 rounded-xl border border-slate-700 ${className}`} {...props}>
+    <div className={`glass-card ${className}`} {...props}>
       {children}
     </div>
   );

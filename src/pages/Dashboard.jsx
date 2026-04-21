@@ -24,10 +24,10 @@ export function Dashboard() {
     >
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-white">Dashboard</h1>
+          <h1 className="text-3xl font-extrabold gradient-text">Dashboard</h1>
           <p className="text-slate-400 text-sm mt-1">Track your study progress</p>
         </div>
-        <Button onClick={() => navigate(ROUTES.STUDY_SESSION)}>
+        <Button onClick={() => navigate(ROUTES.STUDY_SESSION)} className="glow-button">
           <Play className="w-4 h-4" /> Start Studying
         </Button>
       </div>
@@ -41,7 +41,7 @@ export function Dashboard() {
           <UpcomingTasks />
         </div>
         <div>
-          <Card className="h-full">
+          <Card className="h-full glow-ring">
             <CardHeader>
               <h3 className="text-lg font-semibold text-white">Quick Timer</h3>
             </CardHeader>

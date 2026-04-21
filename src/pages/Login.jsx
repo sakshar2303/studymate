@@ -3,7 +3,8 @@ import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '../utils/constants';
 import { Card, CardHeader, CardBody, Button, Input } from '../components/ui';
-import { GraduationCap, Mail, Lock, User } from 'lucide-react';
+import { AnimatedBackground } from '../components/ui/AnimatedBackground';
+import { GraduationCap, Mail, Lock } from 'lucide-react';
 
 export function Login() {
   const { login, googleLogin } = useAuth();
@@ -41,24 +42,26 @@ export function Login() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 px-4">
-      <div className="w-full max-w-md">
+    <div className="min-h-screen flex items-center justify-center relative px-4" style={{ background: '#060918' }}>
+      <AnimatedBackground />
+      
+      <div className="w-full max-w-md relative z-10">
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-amber-500 rounded-2xl mb-4">
-            <GraduationCap className="w-10 h-10 text-slate-900" />
+          <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-amber-400 to-orange-500 rounded-2xl mb-6 shadow-2xl shadow-amber-500/30">
+            <GraduationCap className="w-12 h-12 text-slate-900" />
           </div>
-          <h1 className="text-3xl font-bold text-white">StudyMate</h1>
-          <p className="text-slate-400 mt-2">Your AI-powered study companion</p>
+          <h1 className="text-4xl font-extrabold gradient-text tracking-tight">StudyMate</h1>
+          <p className="text-slate-400 mt-3 text-lg">Your AI-powered study companion</p>
         </div>
 
-        <Card>
-          <CardHeader>
+        <div className="glass-card">
+          <div className="px-6 py-5 border-b border-white/5">
             <h2 className="text-xl font-semibold text-white">Welcome Back</h2>
-            <p className="text-sm text-slate-400">Sign in to continue your studies</p>
-          </CardHeader>
-          <CardBody className="space-y-4">
+            <p className="text-sm text-slate-400 mt-1">Sign in to continue your studies</p>
+          </div>
+          <div className="px-6 py-6 space-y-5">
             {error && (
-              <div className="bg-red-500/10 border border-red-500/20 rounded-lg px-4 py-2 text-red-400 text-sm">
+              <div className="bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3 text-red-400 text-sm">
                 {error}
               </div>
             )}
@@ -86,15 +89,15 @@ export function Login() {
                   className="pl-10"
                 />
               </div>
-              <Button type="submit" loading={loading} className="w-full">
+              <Button type="submit" loading={loading} className="w-full glow-button">
                 Sign In
               </Button>
             </form>
 
             <div className="relative flex items-center gap-4">
-              <div className="flex-1 h-px bg-slate-700" />
+              <div className="flex-1 h-px bg-white/5" />
               <span className="text-xs text-slate-500">or</span>
-              <div className="flex-1 h-px bg-slate-700" />
+              <div className="flex-1 h-px bg-white/5" />
             </div>
 
             <Button variant="secondary" onClick={handleGoogle} disabled={loading} className="w-full">
@@ -109,12 +112,14 @@ export function Login() {
 
             <p className="text-center text-sm text-slate-400">
               Don't have an account?{' '}
-              <button onClick={() => navigate(ROUTES.SIGNUP)} className="text-amber-400 hover:underline">
+              <button onClick={() => navigate(ROUTES.SIGNUP)} className="text-amber-400 hover:text-amber-300 hover:underline transition-colors">
                 Sign up
               </button>
             </p>
-          </CardBody>
-        </Card>
+          </div>
+        </div>
+
+        <p className="text-center text-xs text-slate-600 mt-6">Built with ❤️ for students everywhere</p>
       </div>
     </div>
   );
