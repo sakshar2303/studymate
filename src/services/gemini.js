@@ -7,7 +7,7 @@ if (!GEMINI_KEY) {
 }
 
 const genAI = new GoogleGenerativeAI(GEMINI_KEY || 'MISSING_KEY');
-const AI_MODEL = 'gemini-1.5-flash';
+const AI_MODEL = 'gemini-2.0-flash';
 
 const systemInstruction = `You are StudyMate AI, a helpful study assistant for students. You help with:
 - Generating quiz questions and flashcards from any subject/topic
