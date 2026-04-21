@@ -1,10 +1,10 @@
-// Direct Gemini API via fetch — no SDK needed, uses v1beta for better quota
-const GEMINI_KEY = import.meta.env.VITE_GEMINI_API_KEY;
-const API_BASE = 'https://generativelanguage.googleapis.com/v1beta';
-const AI_MODEL = 'gemini-2.0-flash';
+// Groq API — free, fast, generous quota using Llama models
+const GROQ_KEY = import.meta.env.VITE_GROQ_API_KEY;
+const API_BASE = 'https://api.groq.com/openai/v1/chat/completions';
+const AI_MODEL = 'llama-3.3-70b-versatile';
 
-if (!GEMINI_KEY) {
-  console.warn('VITE_GEMINI_API_KEY is missing — AI features will use Demo Mode.');
+if (!GROQ_KEY) {
+  console.warn('VITE_GROQ_API_KEY is missing — AI features will use Demo Mode.');
 }
 
 const systemInstruction = `You are StudyMate AI, a helpful study assistant for students. You help with:
@@ -24,61 +24,35 @@ const tutorPrompt = `You are StudyMate's Socratic AI Tutor. Your ultimate goal i
 
 Never write long essays. Keep your interactions highly conversational back-and-forth chat. Always end your message with a question back to the student!`;
 
-// ─── Core API call ──────────────────────────────────────────────────────
+// ─── Core API call (OpenAI-compatible format) ───────────────────────────
 
-async function callGemini(prompt, sysInstruction = systemInstruction) {
-  if (!GEMINI_KEY) return null;
+async function callGroq(messages, sysPrompt = systemInstruction) {
+  if (!GROQ_KEY) return null;
 
-  const url = `${API_BASE}/models/${AI_MODEL}:generateContent?key=${GEMINI_KEY}`;
-  const body = {
-    system_instruction: { parts: [{ text: sysInstruction }] },
-    contents: [{ parts: [{ text: prompt }] }],
-    generationConfig: { maxOutputTokens: 1024 },
-  };
-
-  const res = await fetch(url, {
+  const res = await fetch(API_BASE, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${GROQ_KEY}`,
+    },
+    body: JSON.stringify({
+      model: AI_MODEL,
+      messages: [
+        { role: 'system', content: sysPrompt },
+        ...messages,
+      ],
+      max_tokens: 1024,
+      temperature: 0.7,
+    }),
   });
 
   if (!res.ok) {
     const err = await res.text();
-    throw new Error(`Gemini API ${res.status}: ${err}`);
+    throw new Error(`Groq API ${res.status}: ${err}`);
   }
 
   const data = await res.json();
-  return data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || '';
-}
-
-async function callGeminiChat(messages, sysInstruction = tutorPrompt) {
-  if (!GEMINI_KEY) return null;
-
-  const url = `${API_BASE}/models/${AI_MODEL}:generateContent?key=${GEMINI_KEY}`;
-  const contents = messages.map(m => ({
-    role: m.role === 'user' ? 'user' : 'model',
-    parts: [{ text: m.content }],
-  }));
-
-  const body = {
-    system_instruction: { parts: [{ text: sysInstruction }] },
-    contents,
-    generationConfig: { maxOutputTokens: 1024 },
-  };
-
-  const res = await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-  });
-
-  if (!res.ok) {
-    const err = await res.text();
-    throw new Error(`Gemini API ${res.status}: ${err}`);
-  }
-
-  const data = await res.json();
-  return data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || '';
+  return data.choices?.[0]?.message?.content?.trim() || '';
 }
 
 // ─── Demo Mode Fallback Data ────────────────────────────────────────────
@@ -109,7 +83,7 @@ const demoFlashcards = (subject, topic, count) => {
 
 export const generateQuizQuestions = async (subject, topic, count = 5) => {
   try {
-    const prompt = `Generate ${count} multiple choice quiz questions about "${topic}" in ${subject}.
+    const messages = [{ role: 'user', content: `Generate ${count} multiple choice quiz questions about "${topic}" in ${subject}.
 For each question provide:
 - The question text
 - 4 options (A, B, C, D)
@@ -126,22 +100,22 @@ Format as a JSON array like this:
   }
 ]
 
-Only output valid JSON, no markdown blocks or extra text. Start directly with [.`;
+Only output valid JSON, no markdown blocks or extra text. Start directly with [.` }];
 
-    const text = await callGemini(prompt);
+    const text = await callGroq(messages);
     if (!text) return demoQuizzes(subject, topic, count);
     const match = text.match(/\[[\s\S]*\]/);
     if (match) return JSON.parse(match[0]);
     throw new Error('Failed to parse quiz response');
   } catch (err) {
-    console.warn('⚠️ Gemini API failed, falling back to Demo Mode:', err.message);
+    console.warn('⚠️ AI API failed, falling back to Demo Mode:', err.message);
     return demoQuizzes(subject, topic, count);
   }
 };
 
 export const generateFlashcards = async (subject, topic, count = 5) => {
   try {
-    const prompt = `Generate ${count} flashcards about "${topic}" in ${subject}.
+    const messages = [{ role: 'user', content: `Generate ${count} flashcards about "${topic}" in ${subject}.
 For each flashcard provide:
 - front: The question or term (what to remember)
 - back: The answer or definition (the memory hook)
@@ -154,27 +128,31 @@ Format as a JSON array:
   }
 ]
 
-Only output valid JSON, no markdown blocks or extra text. Start directly with [.`;
+Only output valid JSON, no markdown blocks or extra text. Start directly with [.` }];
 
-    const text = await callGemini(prompt);
+    const text = await callGroq(messages);
     if (!text) return demoFlashcards(subject, topic, count);
     const match = text.match(/\[[\s\S]*\]/);
     if (match) return JSON.parse(match[0]);
     throw new Error('Failed to parse flashcards response');
   } catch (err) {
-    console.warn('⚠️ Gemini API failed, falling back to Demo Mode:', err.message);
+    console.warn('⚠️ AI API failed, falling back to Demo Mode:', err.message);
     return demoFlashcards(subject, topic, count);
   }
 };
 
 export const askAI = async (messages) => {
   try {
-    const text = await callGeminiChat(messages);
-    if (!text) return "👋 Hi! I'm StudyMate's AI Tutor running in **Demo Mode**. To enable live AI tutoring, add a valid `VITE_GEMINI_API_KEY` in your environment variables. In the meantime, explore the rest of the app!";
+    const formatted = messages.map(m => ({
+      role: m.role === 'user' ? 'user' : 'assistant',
+      content: m.content,
+    }));
+    const text = await callGroq(formatted, tutorPrompt);
+    if (!text) return "👋 Hi! I'm StudyMate's AI Tutor running in **Demo Mode**. To enable live AI tutoring, add a valid `VITE_GROQ_API_KEY` in your environment variables.";
     return text;
   } catch (err) {
-    console.warn('⚠️ Gemini API failed for chat:', err.message);
-    return "I'm having trouble connecting to the AI service right now. This might be a temporary rate limit — please try again in a few seconds! 🔄";
+    console.warn('⚠️ AI API failed for chat:', err.message);
+    return "I'm having trouble connecting to the AI service right now. Please try again in a moment! 🔄";
   }
 };
 
@@ -192,7 +170,7 @@ export const generateStudyInsights = async (subjects, sessions) => {
     const totalHours = sessions.reduce((sum, s) => sum + (s.duration || 0), 0) / 60;
     const avgPerDay = totalHours / 7;
 
-    const prompt = `Analyze this student's study data and provide 3-4 actionable insights:
+    const messages = [{ role: 'user', content: `Analyze this student's study data and provide 3-4 actionable insights:
 
 Subjects: ${JSON.stringify(subjectSummary)}
 Total hours tracked: ${totalHours.toFixed(1)}
@@ -205,13 +183,13 @@ Provide insights about:
 3. Best subject to improve
 4. One specific actionable tip
 
-Be encouraging but honest. Keep it concise (2-3 sentences per insight).`;
+Be encouraging but honest. Keep it concise (2-3 sentences per insight).` }];
 
-    const text = await callGemini(prompt);
-    if (!text) return `📊 **Demo Insights**: You have ${subjects.length} subject(s) and ${sessions.length} session(s) logged. Keep up the great work!`;
+    const text = await callGroq(messages);
+    if (!text) return `📊 You have ${subjects.length} subject(s) and ${sessions.length} session(s) logged. Keep up the great work!`;
     return text;
   } catch (err) {
-    console.warn('⚠️ Gemini API failed for insights:', err.message);
-    return `📊 **Demo Insights**: You have ${subjects.length} subject(s) and ${sessions.length} session(s) logged. Keep building consistent study habits!`;
+    console.warn('⚠️ AI API failed for insights:', err.message);
+    return `📊 You have ${subjects.length} subject(s) and ${sessions.length} session(s) logged. Keep building consistent study habits!`;
   }
 };
