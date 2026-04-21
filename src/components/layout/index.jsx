@@ -7,9 +7,10 @@ const navItems = [
   { to: ROUTES.DASHBOARD, label: 'Dashboard', icon: BookOpen },
   { to: ROUTES.SUBJECTS, label: 'Subjects', icon: Users },
   { to: ROUTES.STUDY_SESSION, label: 'Study', icon: Play },
-  { to: ROUTES.ANALYTICS, label: 'Analytics', icon: BarChart2 },
+  { to: ROUTES.NOTES, label: 'Notes', icon: BookOpen },
   { to: ROUTES.QUIZZES, label: 'Quizzes', icon: Zap },
-  { to: ROUTES.AI_ASSISTANT, label: 'AI Helper', icon: GraduationCap },
+  { to: ROUTES.AI_ASSISTANT, label: 'AI Tutor', icon: GraduationCap },
+  { to: ROUTES.ANALYTICS, label: 'Analytics', icon: BarChart2 },
   { to: ROUTES.SETTINGS, label: 'Settings', icon: Settings },
 ];
 
@@ -34,7 +35,7 @@ export function Navbar() {
           </div>
 
           <div className="hidden md:flex items-center gap-1">
-            {navItems.slice(0, 5).map(({ to, label, icon: Icon }) => (
+            {navItems.slice(0, 6).map(({ to, label, icon: Icon }) => (
               <NavLink
                 key={to}
                 to={to}

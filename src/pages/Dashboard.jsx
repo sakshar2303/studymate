@@ -3,8 +3,10 @@ import { Card, CardBody, CardHeader, Button, EmptyState } from '../components/ui
 import { InsightCard } from '../components/analytics/InsightCard';
 import { SubjectCard } from '../components/analytics/InsightCard';
 import { PomodoroTimer } from '../components/timer/PomodoroTimer';
+import { UpcomingTasks } from '../components/study/UpcomingTasks';
 import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '../utils/constants';
+import { motion } from 'framer-motion';
 import { Plus, Play, BookOpen } from 'lucide-react';
 
 export function Dashboard() {
@@ -14,7 +16,12 @@ export function Dashboard() {
   const recentSubjects = subjects ? subjects.slice(0, 3) : [];
 
   return (
-    <div className="p-4 md:p-6 space-y-6 max-w-6xl mx-auto">
+    <motion.div 
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0 }}
+      className="p-4 md:p-6 space-y-6 max-w-6xl mx-auto"
+    >
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-white">Dashboard</h1>
@@ -28,15 +35,22 @@ export function Dashboard() {
       {/* Quick Stats */}
       <InsightCard />
 
-      {/* Quick Timer */}
-      <Card>
-        <CardHeader>
-          <h3 className="text-lg font-semibold text-white">Quick Timer</h3>
-        </CardHeader>
-        <CardBody className="flex justify-center py-6">
-          <PomodoroTimer compact />
-        </CardBody>
-      </Card>
+      {/* Main Grid: Tasks + Timer */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2">
+          <UpcomingTasks />
+        </div>
+        <div>
+          <Card className="h-full">
+            <CardHeader>
+              <h3 className="text-lg font-semibold text-white">Quick Timer</h3>
+            </CardHeader>
+            <CardBody className="flex justify-center py-6">
+              <PomodoroTimer compact />
+            </CardBody>
+          </Card>
+        </div>
+      </div>
 
       {/* Recent Subjects */}
       <div>
@@ -71,6 +85,6 @@ export function Dashboard() {
           </div>
         )}
       </div>
-    </div>
+    </motion.div>
   );
 }

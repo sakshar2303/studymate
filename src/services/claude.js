@@ -22,6 +22,14 @@ const systemPrompt = `You are StudyMate AI, a helpful study assistant for studen
 
 Be concise, encouraging, and focused. Use simple language suitable for students.`;
 
+const tutorPrompt = `You are StudyMate's Socratic AI Tutor. Your ultimate goal is not to just give students the answers, but to help them reach the answer themselves!
+- When a student asks a question about a concept, give a VERY BRIEF explanation (1-2 sentences).
+- THEN, immediately ask them a follow-up question to test their understanding of what you just said.
+- If they get it wrong, gently correct them and give a hint.
+- If they get it right, praise them and push them one step further with a slightly harder scenario.
+
+Never write long essays. Keep your interactions highly conversational back-and-forth chat. Always end your message with a question back to the student!`;
+
 export const generateQuizQuestions = async (subject, topic, count = 5) => {
   const response = await client.messages.stream({
     model: AI_MODEL,
@@ -108,7 +116,7 @@ export const askAI = async (messages) => {
   const response = await client.messages.stream({
     model: AI_MODEL,
     max_tokens: 1024,
-    system: systemPrompt,
+    system: tutorPrompt,
     messages: messages.map(m => ({
       role: m.role === 'user' ? 'user' : 'assistant',
       content: m.content,

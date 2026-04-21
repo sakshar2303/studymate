@@ -15,6 +15,7 @@ const StudySession = lazy(() => import('./pages/StudySession').then(m => ({ defa
 const Analytics = lazy(() => import('./pages/Analytics').then(m => ({ default: m.Analytics })));
 const Quizzes = lazy(() => import('./pages/Quizzes').then(m => ({ default: m.Quizzes })));
 const AIAssistant = lazy(() => import('./pages/AIAssistant').then(m => ({ default: m.AIAssistant })));
+const Notes = lazy(() => import('./pages/Notes').then(m => ({ default: m.Notes })));
 const Settings = lazy(() => import('./pages/Settings').then(m => ({ default: m.Settings })));
 
 function App() {
@@ -45,6 +46,7 @@ function App() {
                             <Route path={ROUTES.ANALYTICS} element={<Analytics />} />
                             <Route path={ROUTES.QUIZZES} element={<Quizzes />} />
                             <Route path={ROUTES.AI_ASSISTANT} element={<AIAssistant />} />
+                            <Route path={ROUTES.NOTES} element={<Notes />} />
                             <Route path={ROUTES.SETTINGS} element={<Settings />} />
                             <Route path="*" element={<Navigate to={ROUTES.DASHBOARD} replace />} />
                           </Routes>

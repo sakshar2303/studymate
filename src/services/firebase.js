@@ -164,6 +164,9 @@ export const addFlashcard = async (uid, card) => {
     ...card,
     createdAt: serverTimestamp(),
     nextReview: new Date().toISOString(),
+    interval: 0,
+    easeFactor: 2.5,
+    repetitions: 0
   });
   return ref.id;
 };
@@ -187,6 +190,10 @@ export const getFlashcards = async (uid, subjectId) => {
 
 export const deleteFlashcard = async (uid, cardId) => {
   await deleteDoc(doc(db, 'users', uid, 'flashcards', cardId));
+};
+
+export const updateFlashcard = async (uid, cardId, data) => {
+  await updateDoc(doc(db, 'users', uid, 'flashcards', cardId), data);
 };
 
 // Chat History CRUD
@@ -214,6 +221,30 @@ export const updateChatSession = async (uid, chatId, messages) => {
 
 export const deleteChatSession = async (uid, chatId) => {
   await deleteDoc(doc(db, 'users', uid, 'chatHistory', chatId));
+};
+
+// Tasks and Exams CRUD
+export const addTask = async (uid, task) => {
+  const ref = await addDoc(collection(db, 'users', uid, 'tasks'), {
+    ...task,
+    completed: false,
+    createdAt: serverTimestamp(),
+  });
+  return ref.id;
+};
+
+export const getTasks = async (uid) => {
+  const q = query(collection(db, 'users', uid, 'tasks'), orderBy('dueDate', 'asc'));
+  const snap = await getDocs(q);
+  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+};
+
+export const updateTask = async (uid, taskId, data) => {
+  await updateDoc(doc(db, 'users', uid, 'tasks', taskId), data);
+};
+
+export const deleteTask = async (uid, taskId) => {
+  await deleteDoc(doc(db, 'users', uid, 'tasks', taskId));
 };
 
 export default app;

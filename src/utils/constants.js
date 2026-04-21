@@ -44,6 +44,7 @@ export const ROUTES = {
   ANALYTICS: '/analytics',
   AI_ASSISTANT: '/ai-assistant',
   QUIZZES: '/quizzes',
+  NOTES: '/notes',
   SETTINGS: '/settings',
 };
 

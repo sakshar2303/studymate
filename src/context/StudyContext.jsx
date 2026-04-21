@@ -6,6 +6,10 @@ import {
   deleteSubject as fbDeleteSubject,
   addSession as fbAddSession,
   getSessions as fbGetSessions,
+  addTask as fbAddTask,
+  getTasks as fbGetTasks,
+  updateTask as fbUpdateTask,
+  deleteTask as fbDeleteTask,
 } from '../services/firebase';
 import { useAuth } from './AuthContext';
 
@@ -14,6 +18,7 @@ const StudyContext = createContext(null);
 const initialState = {
   subjects: [],
   sessions: [],
+  tasks: [],
   loading: false,
   error: null,
 };
@@ -41,6 +46,19 @@ function studyReducer(state, action) {
       return { ...state, sessions: action.payload };
     case 'ADD_SESSION':
       return { ...state, sessions: [action.payload, ...state.sessions] };
+    case 'SET_TASKS':
+      return { ...state, tasks: action.payload };
+    case 'ADD_TASK':
+      return { ...state, tasks: [...state.tasks, action.payload].sort((a,b) => new Date(a.dueDate) - new Date(b.dueDate)) };
+    case 'UPDATE_TASK':
+      return {
+        ...state,
+        tasks: state.tasks.map(t =>
+          t.id === action.payload.id ? { ...t, ...action.payload.data } : t
+        ),
+      };
+    case 'DELETE_TASK':
+      return { ...state, tasks: state.tasks.filter(t => t.id !== action.payload) };
     default:
       return state;
   }
@@ -73,12 +91,23 @@ export const StudyProvider = ({ children }) => {
     }
   }, [user]);
 
+  const loadTasks = useCallback(async () => {
+    if (!user) return;
+    try {
+      const tasks = await fbGetTasks(user.uid);
+      dispatch({ type: 'SET_TASKS', payload: tasks });
+    } catch (e) {
+      dispatch({ type: 'SET_ERROR', payload: e.message });
+    }
+  }, [user]);
+
   useEffect(() => {
     if (user) {
       loadSubjects();
       loadSessions();
+      loadTasks();
     }
-  }, [user, loadSubjects, loadSessions]);
+  }, [user, loadSubjects, loadSessions, loadTasks]);
 
   const addSubject = async (subject) => {
     if (!user) return;
@@ -117,6 +146,25 @@ export const StudyProvider = ({ children }) => {
     return id;
   };
 
+  const addTask = async (task) => {
+    if (!user) return;
+    const id = await fbAddTask(user.uid, task);
+    dispatch({ type: 'ADD_TASK', payload: { id, ...task, completed: false } });
+    return id;
+  };
+
+  const updateTask = async (taskId, data) => {
+    if (!user) return;
+    await fbUpdateTask(user.uid, taskId, data);
+    dispatch({ type: 'UPDATE_TASK', payload: { id: taskId, data } });
+  };
+
+  const deleteTask = async (taskId) => {
+    if (!user) return;
+    await fbDeleteTask(user.uid, taskId);
+    dispatch({ type: 'DELETE_TASK', payload: taskId });
+  };
+
   return (
     <StudyContext.Provider value={{
       ...state,
@@ -124,8 +172,12 @@ export const StudyProvider = ({ children }) => {
       updateSubject,
       deleteSubject,
       addSession,
+      addTask,
+      updateTask,
+      deleteTask,
       loadSubjects,
       loadSessions,
+      loadTasks,
     }}>
       {children}
     </StudyContext.Provider>
