@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useStudy } from '../../context/StudyContext';
-import { generateStudyInsights } from '../../services/claude';
+import { generateStudyInsights } from '../../services/gemini';
 import { Card, CardHeader, CardBody, LoadingSpinner } from '../ui';
 import { Sparkles } from 'lucide-react';
 

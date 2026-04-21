@@ -1,19 +1,15 @@
-import Anthropic from '@anthropic-ai/sdk';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 
-const ANTHROPIC_KEY = import.meta.env.VITE_ANTHROPIC_API_KEY;
+const GEMINI_KEY = import.meta.env.VITE_GEMINI_API_KEY;
 
-if (!ANTHROPIC_KEY) {
-  console.error('CRITICAL: VITE_ANTHROPIC_API_KEY is missing from environment variables!');
+if (!GEMINI_KEY) {
+  console.error('CRITICAL: VITE_GEMINI_API_KEY is missing from environment variables!');
 }
 
-const client = new Anthropic({
-  apiKey: ANTHROPIC_KEY || 'MISSING_KEY',
-  dangerouslyAllowBrowser: true,
-});
+const genAI = new GoogleGenerativeAI(GEMINI_KEY || 'MISSING_KEY');
+const AI_MODEL = 'gemini-1.5-flash';
 
-const AI_MODEL = 'claude-3-haiku-20240307';
-
-const systemPrompt = `You are StudyMate AI, a helpful study assistant for students. You help with:
+const systemInstruction = `You are StudyMate AI, a helpful study assistant for students. You help with:
 - Generating quiz questions and flashcards from any subject/topic
 - Explaining complex concepts in simple terms
 - Providing examples, mnemonics, and memory tricks
@@ -30,14 +26,17 @@ const tutorPrompt = `You are StudyMate's Socratic AI Tutor. Your ultimate goal i
 
 Never write long essays. Keep your interactions highly conversational back-and-forth chat. Always end your message with a question back to the student!`;
 
-export const generateQuizQuestions = async (subject, topic, count = 5) => {
-  const response = await client.messages.stream({
+// Helper function to get the model with standard instructions
+const getModel = (instruction = systemInstruction) => {
+  return genAI.getGenerativeModel({
     model: AI_MODEL,
-    max_tokens: 1024,
-    system: systemPrompt,
-    messages: [{
-      role: 'user',
-      content: `Generate ${count} multiple choice quiz questions about "${topic}" in ${subject}.
+    systemInstruction: instruction,
+  });
+};
+
+export const generateQuizQuestions = async (subject, topic, count = 5) => {
+  const model = getModel();
+  const prompt = `Generate ${count} multiple choice quiz questions about "${topic}" in ${subject}.
 For each question provide:
 - The question text
 - 4 options (A, B, C, D)
@@ -54,18 +53,11 @@ Format as a JSON array like this:
   }
 ]
 
-Only output valid JSON, no markdown or extra text.`,
-    }],
-  });
+Only output valid JSON, no markdown blocks or extra text. Start directly with [.`;
 
-  let fullText = '';
-  for await (const event of response) {
-    if (event.type === 'content_block_delta') {
-      fullText += event.delta.text;
-    }
-  }
-
-  const text = fullText.trim();
+  const result = await model.generateContent(prompt);
+  const text = result.response.text().trim();
+  
   const match = text.match(/\[[\s\S]*\]/);
   if (match) {
     return JSON.parse(match[0]);
@@ -74,13 +66,8 @@ Only output valid JSON, no markdown or extra text.`,
 };
 
 export const generateFlashcards = async (subject, topic, count = 5) => {
-  const response = await client.messages.stream({
-    model: AI_MODEL,
-    max_tokens: 1024,
-    system: systemPrompt,
-    messages: [{
-      role: 'user',
-      content: `Generate ${count} flashcards about "${topic}" in ${subject}.
+  const model = getModel();
+  const prompt = `Generate ${count} flashcards about "${topic}" in ${subject}.
 For each flashcard provide:
 - front: The question or term (what to remember)
 - back: The answer or definition (the memory hook)
@@ -93,18 +80,11 @@ Format as a JSON array:
   }
 ]
 
-Only output valid JSON.`,
-    }],
-  });
+Only output valid JSON, no markdown blocks or extra text. Start directly with [.`;
 
-  let fullText = '';
-  for await (const event of response) {
-    if (event.type === 'content_block_delta') {
-      fullText += event.delta.text;
-    }
-  }
+  const result = await model.generateContent(prompt);
+  const text = result.response.text().trim();
 
-  const text = fullText.trim();
   const match = text.match(/\[[\s\S]*\]/);
   if (match) {
     return JSON.parse(match[0]);
@@ -113,24 +93,20 @@ Only output valid JSON.`,
 };
 
 export const askAI = async (messages) => {
-  const response = await client.messages.stream({
-    model: AI_MODEL,
-    max_tokens: 1024,
-    system: tutorPrompt,
-    messages: messages.map(m => ({
-      role: m.role === 'user' ? 'user' : 'assistant',
-      content: m.content,
-    })),
-  });
-
-  let fullText = '';
-  for await (const event of response) {
-    if (event.type === 'content_block_delta') {
-      fullText += event.delta.text;
-    }
-  }
-
-  return fullText.trim();
+  const model = getModel(tutorPrompt);
+  
+  // Gemini requires mapping standard role names to "user" and "model"
+  const history = messages.slice(0, -1).map(m => ({
+    role: m.role === 'user' ? 'user' : 'model',
+    parts: [{ text: m.content }],
+  }));
+  
+  const lastMessage = messages[messages.length - 1].content;
+  
+  const chat = model.startChat({ history });
+  const result = await chat.sendMessage(lastMessage);
+  
+  return result.response.text();
 };
 
 export const generateStudyInsights = async (subjects, sessions) => {
@@ -147,13 +123,8 @@ export const generateStudyInsights = async (subjects, sessions) => {
   const totalHours = sessions.reduce((sum, s) => sum + (s.duration || 0), 0) / 60;
   const avgPerDay = totalHours / 7;
 
-  const response = await client.messages.stream({
-    model: AI_MODEL,
-    max_tokens: 1024,
-    system: systemPrompt,
-    messages: [{
-      role: 'user',
-      content: `Analyze this student's study data and provide 3-4 actionable insights:
+  const model = getModel();
+  const prompt = `Analyze this student's study data and provide 3-4 actionable insights:
 
 Subjects: ${JSON.stringify(subjectSummary)}
 Total hours tracked: ${totalHours.toFixed(1)}
@@ -166,16 +137,8 @@ Provide insights about:
 3. Best subject to improve
 4. One specific actionable tip
 
-Be encouraging but honest. Keep it concise (2-3 sentences per insight).`,
-    }],
-  });
+Be encouraging but honest. Keep it concise (2-3 sentences per insight).`;
 
-  let fullText = '';
-  for await (const event of response) {
-    if (event.type === 'content_block_delta') {
-      fullText += event.delta.text;
-    }
-  }
-
-  return fullText.trim();
+  const result = await model.generateContent(prompt);
+  return result.response.text().trim();
 };

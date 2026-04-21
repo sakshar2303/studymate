@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 import { useStudy } from '../../context/StudyContext';
 import { Card, CardHeader, CardBody, Button, LoadingSpinner, Select, Input } from '../ui';
-import { generateQuizQuestions, generateFlashcards } from '../../services/claude';
+import { generateQuizQuestions, generateFlashcards } from '../../services/gemini';
 import { addQuiz, addFlashcards } from '../../services/firebase';
 import { useAuth } from '../../context/AuthContext';
 import { Zap, BookOpen, FlipHorizontal, Lightbulb } from 'lucide-react';

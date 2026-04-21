@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { addChatSession, getChatSessions, updateChatSession } from '../../services/firebase';
-import { askAI } from '../../services/claude';
+import { askAI } from '../../services/gemini';
 import { Card, CardHeader, CardBody, Button, LoadingSpinner } from '../ui';
 import { GraduationCap, Send, Trash2 } from 'lucide-react';
 
