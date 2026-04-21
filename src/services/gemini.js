@@ -1,13 +1,11 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
-
+// Direct Gemini API via fetch — no SDK needed, uses v1beta for better quota
 const GEMINI_KEY = import.meta.env.VITE_GEMINI_API_KEY;
+const API_BASE = 'https://generativelanguage.googleapis.com/v1beta';
+const AI_MODEL = 'gemini-2.0-flash';
 
 if (!GEMINI_KEY) {
   console.warn('VITE_GEMINI_API_KEY is missing — AI features will use Demo Mode.');
 }
-
-const genAI = GEMINI_KEY ? new GoogleGenerativeAI(GEMINI_KEY) : null;
-const AI_MODEL = 'gemini-2.0-flash';
 
 const systemInstruction = `You are StudyMate AI, a helpful study assistant for students. You help with:
 - Generating quiz questions and flashcards from any subject/topic
@@ -26,16 +24,64 @@ const tutorPrompt = `You are StudyMate's Socratic AI Tutor. Your ultimate goal i
 
 Never write long essays. Keep your interactions highly conversational back-and-forth chat. Always end your message with a question back to the student!`;
 
-// Helper function to get the model with standard instructions
-const getModel = (instruction = systemInstruction) => {
-  if (!genAI) return null;
-  return genAI.getGenerativeModel({
-    model: AI_MODEL,
-    systemInstruction: instruction,
-  });
-};
+// ─── Core API call ──────────────────────────────────────────────────────
 
-// ─── Demo Mode Fallback Data ─────────────────────────────────────────────
+async function callGemini(prompt, sysInstruction = systemInstruction) {
+  if (!GEMINI_KEY) return null;
+
+  const url = `${API_BASE}/models/${AI_MODEL}:generateContent?key=${GEMINI_KEY}`;
+  const body = {
+    system_instruction: { parts: [{ text: sysInstruction }] },
+    contents: [{ parts: [{ text: prompt }] }],
+    generationConfig: { maxOutputTokens: 1024 },
+  };
+
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(`Gemini API ${res.status}: ${err}`);
+  }
+
+  const data = await res.json();
+  return data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || '';
+}
+
+async function callGeminiChat(messages, sysInstruction = tutorPrompt) {
+  if (!GEMINI_KEY) return null;
+
+  const url = `${API_BASE}/models/${AI_MODEL}:generateContent?key=${GEMINI_KEY}`;
+  const contents = messages.map(m => ({
+    role: m.role === 'user' ? 'user' : 'model',
+    parts: [{ text: m.content }],
+  }));
+
+  const body = {
+    system_instruction: { parts: [{ text: sysInstruction }] },
+    contents,
+    generationConfig: { maxOutputTokens: 1024 },
+  };
+
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(`Gemini API ${res.status}: ${err}`);
+  }
+
+  const data = await res.json();
+  return data.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || '';
+}
+
+// ─── Demo Mode Fallback Data ────────────────────────────────────────────
 
 const demoQuizzes = (subject, topic, count) => {
   const templates = [
@@ -59,15 +105,9 @@ const demoFlashcards = (subject, topic, count) => {
   return templates.slice(0, count);
 };
 
-// ─── Exported Functions (with automatic Demo Mode fallback) ──────────────
+// ─── Exported Functions ─────────────────────────────────────────────────
 
 export const generateQuizQuestions = async (subject, topic, count = 5) => {
-  const model = getModel();
-  if (!model) {
-    console.info('🧪 Demo Mode: Returning sample quiz questions.');
-    return demoQuizzes(subject, topic, count);
-  }
-
   try {
     const prompt = `Generate ${count} multiple choice quiz questions about "${topic}" in ${subject}.
 For each question provide:
@@ -88,8 +128,8 @@ Format as a JSON array like this:
 
 Only output valid JSON, no markdown blocks or extra text. Start directly with [.`;
 
-    const result = await model.generateContent(prompt);
-    const text = result.response.text().trim();
+    const text = await callGemini(prompt);
+    if (!text) return demoQuizzes(subject, topic, count);
     const match = text.match(/\[[\s\S]*\]/);
     if (match) return JSON.parse(match[0]);
     throw new Error('Failed to parse quiz response');
@@ -100,12 +140,6 @@ Only output valid JSON, no markdown blocks or extra text. Start directly with [.
 };
 
 export const generateFlashcards = async (subject, topic, count = 5) => {
-  const model = getModel();
-  if (!model) {
-    console.info('🧪 Demo Mode: Returning sample flashcards.');
-    return demoFlashcards(subject, topic, count);
-  }
-
   try {
     const prompt = `Generate ${count} flashcards about "${topic}" in ${subject}.
 For each flashcard provide:
@@ -122,8 +156,8 @@ Format as a JSON array:
 
 Only output valid JSON, no markdown blocks or extra text. Start directly with [.`;
 
-    const result = await model.generateContent(prompt);
-    const text = result.response.text().trim();
+    const text = await callGemini(prompt);
+    if (!text) return demoFlashcards(subject, topic, count);
     const match = text.match(/\[[\s\S]*\]/);
     if (match) return JSON.parse(match[0]);
     throw new Error('Failed to parse flashcards response');
@@ -134,21 +168,10 @@ Only output valid JSON, no markdown blocks or extra text. Start directly with [.
 };
 
 export const askAI = async (messages) => {
-  const model = getModel(tutorPrompt);
-  if (!model) {
-    return "👋 Hi! I'm StudyMate's AI Tutor running in **Demo Mode**. To enable live AI tutoring, please add a valid `VITE_GEMINI_API_KEY` in your environment variables. In the meantime, feel free to explore the rest of the app!";
-  }
-
   try {
-    const history = messages.slice(0, -1).map(m => ({
-      role: m.role === 'user' ? 'user' : 'model',
-      parts: [{ text: m.content }],
-    }));
-
-    const lastMessage = messages[messages.length - 1].content;
-    const chat = model.startChat({ history });
-    const result = await chat.sendMessage(lastMessage);
-    return result.response.text();
+    const text = await callGeminiChat(messages);
+    if (!text) return "👋 Hi! I'm StudyMate's AI Tutor running in **Demo Mode**. To enable live AI tutoring, add a valid `VITE_GEMINI_API_KEY` in your environment variables. In the meantime, explore the rest of the app!";
+    return text;
   } catch (err) {
     console.warn('⚠️ Gemini API failed for chat:', err.message);
     return "I'm having trouble connecting to the AI service right now. This might be a temporary rate limit — please try again in a few seconds! 🔄";
@@ -160,18 +183,12 @@ export const generateStudyInsights = async (subjects, sessions) => {
     return 'Start tracking your study sessions to get personalized insights!';
   }
 
-  const model = getModel();
-  if (!model) {
-    return `📊 **Demo Insights**: You have ${subjects.length} subject(s) and ${sessions.length} session(s) logged. Keep up the great work! Try to maintain a consistent daily study habit of at least 2 hours to hit your goals.`;
-  }
-
   try {
     const subjectSummary = subjects.map(s => ({
       name: s.name,
       totalHours: s.totalHours || 0,
       goalHours: s.goalHours || 10,
     }));
-
     const totalHours = sessions.reduce((sum, s) => sum + (s.duration || 0), 0) / 60;
     const avgPerDay = totalHours / 7;
 
@@ -190,10 +207,11 @@ Provide insights about:
 
 Be encouraging but honest. Keep it concise (2-3 sentences per insight).`;
 
-    const result = await model.generateContent(prompt);
-    return result.response.text().trim();
+    const text = await callGemini(prompt);
+    if (!text) return `📊 **Demo Insights**: You have ${subjects.length} subject(s) and ${sessions.length} session(s) logged. Keep up the great work!`;
+    return text;
   } catch (err) {
     console.warn('⚠️ Gemini API failed for insights:', err.message);
-    return `📊 **Demo Insights**: You have ${subjects.length} subject(s) and ${sessions.length} session(s) logged. Keep building consistent study habits — even 25-minute Pomodoro sessions add up fast!`;
+    return `📊 **Demo Insights**: You have ${subjects.length} subject(s) and ${sessions.length} session(s) logged. Keep building consistent study habits!`;
   }
 };
